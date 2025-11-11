@@ -6,18 +6,20 @@ namespace Task2
     {
         static void Main(string[] args)
         {
-          
+
 
             ServiceCollection services = new ServiceCollection();
 
 
-            Console.WriteLine("Выберите способ отправки сообщения (1 - email, 2 - sms:");
+            Console.WriteLine("Выберите способ отправки сообщения (1 - email, 2 - sms): ");
             int number = int.Parse(Console.ReadLine());
             switch (number)
             {
-                case 1:  services.AddSingleton<INotificationSender, EmailSender>();
+                case 1:
+                    services.AddSingleton<INotificationSender, EmailSender>();
                     break;
-                case 2: services.AddSingleton<INotificationSender, SmsSender>();
+                case 2:
+                    services.AddSingleton<INotificationSender, SmsSender>();
                     break;
                 default:
                     {
@@ -27,15 +29,15 @@ namespace Task2
 
             }
 
-        services.AddSingleton<ILogger,FileLogger>();
-           
-//            
+            services.AddSingleton<ILogger, FileLogger>();
+
+            //            
             services.AddSingleton<NotificationService>();
-            ServiceProvider provider= services.BuildServiceProvider();
+            ServiceProvider provider = services.BuildServiceProvider();
 
             var service = provider.GetRequiredService<NotificationService>();
 
-           
+
             service.SendNotification("Ваш заказ готов", "user@example.com");
         }
     }
