@@ -19,21 +19,17 @@ namespace Task6
 
             UIDocument uiDoc = commandData.Application.ActiveUIDocument;
             Document doc = uiDoc.Document;
-            //var selectedIds = new List<ElementId>();
-            IList<Reference> elems = null;
 
+            IList<Reference> elems = null;
 
             try
             {
                 elems = uiDoc.Selection.PickObjects(ObjectType.Element, "Выберите 2 стены");
-               // var r2 = uiDoc.Selection.PickObject(ObjectType.Element, "Выберите вторую стену");
 
-                //selectedIds.Add(r1.ElementId);
-               // selectedIds.Add(r2.ElementId);
             }
             catch (Autodesk.Revit.Exceptions.OperationCanceledException)
             {
-                // Пользователь нажал Esc – корректно выходим
+
                 return Result.Cancelled;
             }
 
@@ -54,35 +50,24 @@ namespace Task6
                 return Result.Failed;
             }
 
-
             XYZ direction1 = GetWallNormal(wall1);
             XYZ direction2 = GetWallNormal(wall2);
 
-            if (AreVectorParallel(direction1, direction2))
-                TaskDialog.Show("Результат", "Стены параллельны!");
-
-            else
+            if (!AreVectorParallel(direction1, direction2))
+            {
                 TaskDialog.Show("Результат", "Стены не параллельны!");
+                return Result.Failed;
+            }
 
             XYZ point1 = GetMiddleOfWall(wall1);
             XYZ point2 = GetMiddleOfWall(wall2);
-           
+
             var vectorBetweenWall = point2 - point1;
             XYZ normVector = vectorBetweenWall.Normalize();
-            using (var t = new Transaction(doc,"Вектор"))
-            {
-                t.Start();
-                VisualizeAsVector(doc,vectorBetweenWall);
-                VisualizeAsVector(doc,normVector);
-
-                t.Commit();
-            }
 
             double result = vectorBetweenWall.DotProduct(normVector);
-            TaskDialog.Show("Итог", $"{result}");
-            TaskDialog.Show("Итог", $"{UnitUtils.ConvertFromInternalUnits(result, UnitTypeId.Millimeters)}");
+            TaskDialog.Show("Итог", $"Расстояние между стенами {UnitUtils.ConvertFromInternalUnits(result, UnitTypeId.Millimeters):F2} мм");
 
-            uiDoc.Selection.SetElementIds(new List<ElementId>());
             return Result.Succeeded;
 
         }
@@ -100,7 +85,7 @@ namespace Task6
         public bool AreVectorParallel(XYZ a, XYZ b, double tolerance = 1e-10)
         {
             double dotProduct = Math.Abs(a.DotProduct(b));
-            return Math.Abs(dotProduct-1.0) < tolerance;
+            return Math.Abs(dotProduct - 1.0) < tolerance;
         }
 
         public XYZ GetMiddleOfWall(Wall wall)
@@ -110,11 +95,7 @@ namespace Task6
             XYZ middleOfWall = (curve.GetEndPoint(1) + curve.GetEndPoint(0)) / 2;
             return middleOfWall;
         }
-        private void VisualizeAsVector(Document doc, XYZ point)
-        {
-            DirectShape directShape = DirectShape.CreateElement(doc, new ElementId(BuiltInCategory.OST_GenericModel));
-            directShape.SetShape(new List<GeometryObject>() { Line.CreateBound(XYZ.Zero, point) });
-        }
+
 
     }
 }
